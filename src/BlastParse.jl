@@ -1,14 +1,16 @@
 module BlastParse
 
+using FASTX: FASTA
+
 asPercentage(s::AbstractString) = asFloat64(s) / 100.0
 asFloat64(s::AbstractString) = parse(Float64, s)
-asUInt(s::AbstractString) = parse(UInt, s, base=10)
+asInt(s::AbstractString) = parse(Int, s, base=10)
 asSubString(s::Union{String, SubString{String}}) = SubString(s)
 
 const TYPES = Dict(
     asPercentage => Float64,
     asFloat64    => Float64,
-    asUInt       => UInt,
+    asInt       =>  Int,
     asSubString  => SubString{String}
 )
 
@@ -20,7 +22,7 @@ const FUNCTIONS = Dict(
     :qgi        => asSubString,
     :qacc       => asSubString,
     :qaccver    => asSubString,
-    :qlen       => asUInt,
+    :qlen       => asInt,
     :sseqid     => asPercentage,
     :sallseqid  => asPercentage,
     :sgi        => asSubString,
@@ -28,23 +30,23 @@ const FUNCTIONS = Dict(
     :sacc       => asSubString,
     :saccver    => asSubString,
     :sallacc    => asSubString,
-    :slen       => asUInt,
-    :qstart     => asUInt,
-    :qend       => asUInt,
-    :sstart     => asUInt,
-    :send       => asUInt,
+    :slen       => asInt,
+    :qstart     => asInt,
+    :qend       => asInt,
+    :sstart     => asInt,
+    :send       => asInt,
     :evalue     => asFloat64,
     :bitscore   => asFloat64,
     :score      => asFloat64,
-    :length     => asUInt,
+    :length     => asInt,
     :pident     => asPercentage,
-    :nident     => asUInt,
-    :mismatch   => asUInt,
-    :positive   => asUInt,
-    :gapopen    => asUInt,
-    :gaps       => asUInt,
+    :nident     => asInt,
+    :mismatch   => asInt,
+    :positive   => asInt,
+    :gapopen    => asInt,
+    :gaps       => asInt,
     :ppos       => asPercentage,
-    :staxid     => asUInt,
+    :staxid     => asInt,
     :ssciname   => asSubString,
     :scomname   => asSubString,
     :sblastname => asSubString,
@@ -52,13 +54,16 @@ const FUNCTIONS = Dict(
     :stitle     => asSubString,
 )
 
-"A vector of accepted symbols that `parse` can take"
+"""A vector of accepted symbols that `parse` can take.
+Most column names of BLAST are accepted"""
 const ACCEPTED_SYMBOLS = sort!(collect(keys(FUNCTIONS)))
+
+const DEFAULT_COLUMNS = (:qacc, :sacc, :pident, :bitscore)
 
 """
     gen_blastparse_code(cols::Tuple{Vararg{Symbol}}, name::Symbol)) -> Expr
 
-Create an `Expr` that, when evaluated, defines a method \$(name)(::IO).
+Create an `Expr` that, when evaluated, defines a method `\$(name)(::IO)`.
 This method parses a tab-separated BLAST output file, with the columns given
 as `cols`. For valid column names, see the constant `ACCEPTED_SYMBOLS`.
 Values in percentage, such as `sseqid` are scaled to [0.0:1.0].
@@ -70,9 +75,9 @@ julia> @eval gen_blastparse_code((:qacc, :pident, :length), :my_parse)
 my_parse (generic function with 1 method)
 
 julia> open(my_parse, "blastout.tsv")[1:2]
-Vector{NamedTuple{(:qacc, :pident, :length), Tuple{SubString{String}, Float64, UInt64}}} with 2 elements:
-  (qacc = "Segment1", pident=0.81, 2105)
-  (qacc = "Segment2", pident=0.85, 2152)
+Vector{NamedTuple{(:qacc, :pident, :length), Tuple{SubString{String}, Float64, Int64}}} with 2 elements:
+  (qacc = "Segment1", pident = 0.81, length = 2105)
+  (qacc = "Segment2", pident = 0.85, length = 2152)
 ```
 """
 function gen_blastparse_code(cols::Tuple{Vararg{Symbol}}, name::Symbol)
@@ -120,6 +125,45 @@ function gen_blastparse_code(cols::Tuple{Vararg{Symbol}}, name::Symbol)
             return result
         end
     end
+end
+
+@eval $(gen_blastparse_code(DEFAULT_COLUMNS, :parse_default))
+
+function _blastn(
+    tmp_dir::AbstractString,
+    query::AbstractString,
+    subject::AbstractString
+)
+    target = tempname(tmp_dir)
+    cmd = `blastn -query $query -subject $subject -outfmt "6 $(join(DEFAULT_COLUMNS, ' '))"`
+    run(pipeline(cmd, stdout=target))
+    rows = open(parse_default, target)
+    return (rows, target)
+end
+
+function blastn(
+    tmp_dir::AbstractString,
+    query::Union{AbstractString, Vector{FASTA.Record}},
+    subject::Union{AbstractString, Vector{FASTA.Record}},
+)
+    check_blastn()
+    query = query isa AbstractString ? query : dump_fasta(tmp_dir, query)
+    subject = subject isa AbstractString ? subject : dump_fasta(tmp_dir, subject)
+    _blastn(tmp_dir, query, subject)
+end
+
+function check_blastn()
+    run(pipeline(`which blastn`, stdout=devnull))
+end
+
+function dump_fasta(tmp_dir::AbstractString, recs::Vector{FASTA.Record})
+    name = tempname(tmp_dir)
+    open(FASTA.Writer, name) do writer
+        for rec in recs
+            write(writer, rec)
+        end
+    end
+    return name
 end
 
 end # module
