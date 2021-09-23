@@ -52,6 +52,9 @@ const FUNCTIONS = Dict(
     :sblastname => asSubString,
     :sskingdom  => asSubString,
     :stitle     => asSubString,
+    :qcovs      => asFloat64,
+    :qcovhsp    => asFloat64,
+    :qcovus     => asFloat64,
 )
 
 """A vector of accepted symbols that `parse` can take.
