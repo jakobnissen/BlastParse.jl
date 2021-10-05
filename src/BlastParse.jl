@@ -132,41 +132,4 @@ end
 
 @eval $(gen_blastparse_code(DEFAULT_COLUMNS, :parse_default))
 
-function _blastn(
-    tmp_dir::AbstractString,
-    query::AbstractString,
-    subject::AbstractString
-)
-    target = tempname(tmp_dir)
-    cmd = `blastn -query $query -subject $subject -outfmt "6 $(join(DEFAULT_COLUMNS, ' '))"`
-    run(pipeline(cmd, stdout=target))
-    rows = open(parse_default, target)
-    return (rows, target)
-end
-
-function blastn(
-    tmp_dir::AbstractString,
-    query::Union{AbstractString, Vector{FASTA.Record}},
-    subject::Union{AbstractString, Vector{FASTA.Record}},
-)
-    check_blastn()
-    query = query isa AbstractString ? query : dump_fasta(tmp_dir, query)
-    subject = subject isa AbstractString ? subject : dump_fasta(tmp_dir, subject)
-    _blastn(tmp_dir, query, subject)
-end
-
-function check_blastn()
-    run(pipeline(`which blastn`, stdout=devnull))
-end
-
-function dump_fasta(tmp_dir::AbstractString, recs::Vector{FASTA.Record})
-    name = tempname(tmp_dir)
-    open(FASTA.Writer, name) do writer
-        for rec in recs
-            write(writer, rec)
-        end
-    end
-    return name
-end
-
 end # module
