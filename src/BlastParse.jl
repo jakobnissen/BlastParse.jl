@@ -59,7 +59,12 @@ const FUNCTIONS = Dict(
 Most column names of BLAST are accepted"""
 const ACCEPTED_SYMBOLS = sort!(collect(keys(FUNCTIONS)))
 
-const DEFAULT_COLUMNS = (:qacc, :sacc, :pident, :bitscore)
+# Default fields in NCBI blastn 2.6.0
+const DEFAULT_COLUMNS = (
+    :qaccver, :saccver, :pident, :length,
+    :mismatch, :gapopen, :qstart, :qend,
+    :sstart, :send, :evalue, :bitscore
+)
 
 """
     gen_blastparse_code(cols::Tuple{Vararg{Symbol}}, name::Symbol)) -> Expr
