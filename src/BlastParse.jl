@@ -1,7 +1,5 @@
 module BlastParse
 
-using FASTX: FASTA
-
 asPercentage(s::AbstractString) = asFloat64(s) / 100.0
 asFloat64(s::AbstractString) = parse(Float64, s)
 asInt(s::AbstractString) = parse(Int, s, base=10)
@@ -10,7 +8,7 @@ asSubString(s::Union{String, SubString{String}}) = SubString(s)
 const TYPES = Dict(
     asPercentage => Float64,
     asFloat64    => Float64,
-    asInt       =>  Int,
+    asInt        =>  Int,
     asSubString  => SubString{String}
 )
 
