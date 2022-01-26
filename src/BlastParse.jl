@@ -8,7 +8,7 @@ asSubString(s::Union{String, SubString{String}}) = SubString(s)
 const TYPES = Dict(
     asPercentage => Float64,
     asFloat64    => Float64,
-    asInt        =>  Int,
+    asInt        => Int,
     asSubString  => SubString{String}
 )
 
@@ -110,7 +110,7 @@ function gen_blastparse_code(cols::Tuple{Vararg{Symbol}}, name::Symbol)
                     if codeunit(line, i) == UInt8('\t')
                         n += 1
                         n >= $nfields && break
-                        substr = SubString(line, start, i-1)
+                        substr = SubString(line, start, prevind(line, i))
                         @inbounds fields[n] = substr
                         start = i + 1
                     end
