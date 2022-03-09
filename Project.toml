@@ -2,3 +2,6 @@ name = "BlastParse"
 uuid = "782da55a-ad1a-4c3c-92ac-19e08d16b292"
 authors = ["Jakob Nybo Nissen <jakobnybonissen@gmail.com>"]
 version = "0.1.2"
+
+[compat]
+julia = "1.6"

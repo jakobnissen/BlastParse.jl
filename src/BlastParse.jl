@@ -98,7 +98,7 @@ function gen_blastparse_code(cols::Tuple{Vararg{Symbol}}, name::Symbol)
     end
     return quote
         function $(name)(io::IO)
-            fields = Vector{SubString{String}}(undef, $nfields)
+            fields = fill(SubString("", 1, 0), $nfields)
             result = Vector{$T}()
             lineno = 0
             for line in eachline(io)
