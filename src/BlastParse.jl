@@ -3,13 +3,15 @@ module BlastParse
 asPercentage(s::AbstractString) = asFloat64(s) / 100.0
 asFloat64(s::AbstractString) = parse(Float64, s)
 asInt(s::AbstractString) = parse(Int, s, base=10)
+asIntPerc(s::AbstractString) = parse(Int, s, base=10) / 100.0
 asSubString(s::Union{String, SubString{String}}) = SubString(s)
 
 const TYPES = Dict(
     asPercentage => Float64,
     asFloat64    => Float64,
     asInt        => Int,
-    asSubString  => SubString{String}
+    asSubString  => SubString{String},
+    asIntPerc    => Float64
 )
 
 # Not all possible fields are present
@@ -50,9 +52,9 @@ const FUNCTIONS = Dict(
     :sblastname => asSubString,
     :sskingdom  => asSubString,
     :stitle     => asSubString,
-    :qcovs      => asFloat64,
-    :qcovhsp    => asFloat64,
-    :qcovus     => asFloat64,
+    :qcovs      => asIntPerc,
+    :qcovhsp    => asIntPerc,
+    :qcovus     => asIntPerc,
 )
 
 """A vector of accepted symbols that `parse` can take.
