@@ -118,7 +118,7 @@ function gen_blastparse_code(cols::Tuple{Vararg{Symbol}}, name::Symbol)
                     end
                 end
                 if n+1 != $nfields
-                    error("Expected $(n+1) fields, stopped at $n fields, line $lineno.")
+                    error("Expected $($nfields) fields, stopped at $(n+1) fields, line $lineno.")
                 end
                 @inbounds fields[n+1] = SubString(line, start, lastindex(line))
 
